@@ -23,3 +23,6 @@ Route::put('/superheroes/{superheroe}', [SuperheroeController::class, 'update'])
 
 // Ruta para eliminar un superhéroe
 Route::delete('/superheroes/{superheroe}', [SuperheroeController::class, 'destroy'])->name('superheroes.destroy');
+
+Route::get('superheroes/deleted', [SuperheroeController::class, 'deleted'])->name('superheroes.deleted');
+Route::post('superheroes/{id}/restore', [SuperheroeController::class, 'restore'])->name('superheroes.restore');

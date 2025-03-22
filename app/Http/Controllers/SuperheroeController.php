@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Superheroe;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class SuperheroeController extends Controller
@@ -29,16 +30,20 @@ class SuperheroeController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'nombre_real' => 'required|string|max:255',
             'nombre_superheroe' => 'required|string|max:255',
-            'foto_url' => 'required|url',
+            'foto_url' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'informacion_adicional' => 'nullable|string',
         ]);
-
-        Superheroe::create($request->all());
-
-        return redirect()->route('superheroes.index')->with('success', 'Superhéroe creado correctamente.');
+    
+        if ($request->hasFile('foto_url')) {
+            $data['foto_url'] = $request->file('foto_url')->store('superheroes', 'public');
+        }
+    
+        Superheroe::create($data);
+    
+        return redirect()->route('superheroes.index')->with('success', 'Superhéroe agregado');
     }
 
     /**
@@ -64,15 +69,26 @@ class SuperheroeController extends Controller
      */
     public function update(Request $request, Superheroe $superheroe)
     {
-        $request->validate([
+        $data = $request->validate([
             'nombre_real' => 'required|string|max:255',
             'nombre_superheroe' => 'required|string|max:255',
-            'foto_url' => 'required|url',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'informacion_adicional' => 'nullable|string',
         ]);
-
-        $superheroe->update($request->all());
-
+    
+        // Si el usuario subió una nueva foto
+        if ($request->hasFile('foto')) {
+            // Eliminar la foto anterior si existe
+            if ($superheroe->foto) {
+                Storage::disk('public')->delete($superheroe->foto);
+            }
+            // Guardar la nueva imagen
+            $data['foto'] = $request->file('foto')->store('superheroes', 'public');
+        }
+    
+        // Actualizar la información del superhéroe
+        $superheroe->update($data);
+    
         return redirect()->route('superheroes.index')->with('success', 'Superhéroe actualizado correctamente.');
     }
 
@@ -82,7 +98,17 @@ class SuperheroeController extends Controller
     public function destroy($id)
     {
         $superheroe = Superheroe::findOrFail($id);
-        $superheroe->delete();
+        $superheroe->delete(); // Solo se marca como eliminado (soft delete)
         return redirect()->route('superheroes.index')->with('success', 'Superhéroe eliminado correctamente.');
     }
+    public function deleted() {
+        $superheroes = Superheroe::onlyTrashed()->get();
+        return view('superheroes.deleted', compact('superheroes'));
+    }
+    
+    public function restore($id) {
+        Superheroe::withTrashed()->findOrFail($id)->restore();
+        return redirect()->route('superheroes.deleted')->with('success', 'Superhéroe restaurado');
+    }
 }
+

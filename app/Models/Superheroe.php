@@ -2,17 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 
 class Superheroe extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
-    protected $fillable = [
-        'nombre_real',
-        'nombre_superheroe',
-        'foto_url',
-        'informacion_adicional'
-    ];
+    protected $fillable = ['nombre_real', 'nombre_superheroe', 'foto_url', 'informacion_adicional'];
+    protected $dates = ['deleted_at'];
 }
